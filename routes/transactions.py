@@ -1,22 +1,50 @@
-from flask import Blueprint
+import requests
+from flask import Blueprint, jsonify
+
+from db import get_db
 
 transactions_bp = Blueprint('transactions', __name__)
 
+URI = "https://blockchain.info/"
 
-@transactions_bp.route('/<address>', methods=['GET'])
-def get_transactions(address):
+@transactions_bp.route('/<address_id>', methods=['GET'])
+def get_transactions(address_id):
     """
     Get list of transactions for a given address
     """
     return "get_transactions"
 
 
-@transactions_bp.route('/<address>/balance', methods=['GET'])
-def get_balance(address):
+@transactions_bp.route('/<address_id>/balance', methods=['GET'])
+def get_balance(address_id):
     """
-    Get current balance for a given address
+    Get current balance for a given address in BTC
     """
-    return "get_balance"
+    try:
+        response = requests.get(f"{URI}/balance?active={address_id}")
+    except Exception as e:
+        print(e)  # local debug
+        return jsonify({'error': "Could not get balance at this time"}), 500
+
+    data = response.json()
+
+    if response.status_code != 200:
+        return jsonify({'error': "Invalid address"}), 500
+
+    db = get_db()
+    cur = db.execute("""SELECT * FROM balances WHERE address_id = ?""", (address_id,))
+    existing_balance = cur.fetchone()
+
+    balance = data[address_id]['final_balance']
+
+    if existing_balance:
+        db.execute("""UPDATE balances SET balance = ? WHERE address_id = ?""", (balance, address_id))
+    else:
+        db.execute("""INSERT INTO balances (address_id, balance) VALUES (?, ?)""", (address_id, balance))
+
+    db.commit()
+
+    return jsonify({"balance": balance / 1e8})
 
 
 @transactions_bp.route('/sync', methods=['POST'])
