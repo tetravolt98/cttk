@@ -8,6 +8,13 @@ transactions_bp = Blueprint('transactions', __name__)
 URI = "https://blockchain.info/"
 
 
+@transactions_bp.after_request
+def after_request(response):
+    header = response.headers
+    header['Access-Control-Allow-Origin'] = '*'
+    return response
+
+
 @transactions_bp.route('/<address_id>', methods=['GET'])
 def get_transactions(address_id):
     """
@@ -24,10 +31,10 @@ def get_transactions(address_id):
         print(e)  # local debug
         return jsonify({'error': "Could not get transactions at this time"}), 500
 
-    data = response.json()
-
     if response.status_code != 200:
         return jsonify({'error': "Could not get transactions at this time"}), 500
+
+    data = response.json()
 
     return jsonify({'transactions': data['txs']})
 
@@ -43,10 +50,10 @@ def get_balance(address_id):
         print(e)  # local debug
         return jsonify({'error': "Could not get balance at this time"}), 500
 
-    data = response.json()
-
     if response.status_code != 200:
         return jsonify({'error': "Invalid address"}), 500
+
+    data = response.json()
 
     db = get_db()
     cur = db.execute("""SELECT * FROM balances WHERE address_id = ?""", (address_id,))
