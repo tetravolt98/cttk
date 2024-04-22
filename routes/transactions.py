@@ -1,5 +1,5 @@
 import requests
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 
 from db import get_db
 
@@ -7,12 +7,29 @@ transactions_bp = Blueprint('transactions', __name__)
 
 URI = "https://blockchain.info/"
 
+
 @transactions_bp.route('/<address_id>', methods=['GET'])
 def get_transactions(address_id):
     """
     Get list of transactions for a given address
     """
-    return "get_transactions"
+
+    page = request.args.get('page', 1, type=int)
+    offset = (page - 1) * 50
+    limit = 50
+
+    try:
+        response = requests.get(f"https://blockchain.info/rawaddr/{address_id}?offset={offset}&limit={limit}")
+    except Exception as e:
+        print(e)  # local debug
+        return jsonify({'error': "Could not get transactions at this time"}), 500
+
+    data = response.json()
+
+    if response.status_code != 200:
+        return jsonify({'error': "Could not get transactions at this time"}), 500
+
+    return jsonify({'transactions': data['txs']})
 
 
 @transactions_bp.route('/<address_id>/balance', methods=['GET'])
