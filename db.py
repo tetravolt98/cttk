@@ -9,6 +9,7 @@ def get_db():
             current_app.config['DATABASE'])
     return g.sqlite_db
 
+
 def init_db():
     db = get_db()
 
