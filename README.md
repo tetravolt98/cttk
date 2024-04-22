@@ -1,4 +1,10 @@
-To run:
+Instructions below on how to run
+
+Status:
+- frontend completed (react)
+- backend completed (python)
+- database completed (sqlite3)
+- no syncronization
 
 ---
 Deps:
