@@ -52,6 +52,7 @@ function App() {
       setAddresses([...addresses, newAddress]);
       setNewAddress("");
       setErrorMsg("");
+      await fetchBalance(newAddress)
     } catch (error) {
       console.error("Error adding address:", error);
       setErrorMsg(error.response.data.error);
